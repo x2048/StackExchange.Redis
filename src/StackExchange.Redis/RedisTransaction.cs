@@ -155,7 +155,7 @@ namespace StackExchange.Redis
                 set => wasQueued = value;
             }
 
-            protected override void WriteImpl(PhysicalConnection physical)
+            protected override void WriteImpl(IPhysicalBuffer physical)
             {
                 Wrapped.WriteTo(physical);
                 Wrapped.SetRequestSent();
@@ -406,7 +406,7 @@ namespace StackExchange.Redis
                 }
             }
 
-            protected override void WriteImpl(PhysicalConnection physical)
+            protected override void WriteImpl(IPhysicalBuffer physical)
             {
                 physical.WriteHeader(Command, 0);
             }

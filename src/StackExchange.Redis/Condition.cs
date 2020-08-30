@@ -389,7 +389,7 @@ namespace StackExchange.Redis
                     this.value1 = value1; // note no assert here
                 }
 
-                protected override void WriteImpl(PhysicalConnection physical)
+                protected override void WriteImpl(IPhysicalBuffer physical)
                 {
                     if (value.IsNull)
                     {

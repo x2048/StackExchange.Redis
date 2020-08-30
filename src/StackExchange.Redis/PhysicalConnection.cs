@@ -22,7 +22,7 @@ using static StackExchange.Redis.ConnectionMultiplexer;
 
 namespace StackExchange.Redis
 {
-    internal sealed partial class PhysicalConnection : IDisposable
+    internal sealed partial class PhysicalConnection : IPhysicalBuffer, IDisposable
     {
         internal readonly byte[] ChannelPrefix;
 
@@ -940,7 +940,7 @@ namespace StackExchange.Redis
         internal long MaxFlushBytes => _maxFlushBytes;
 #endif
 
-    private static readonly ReadOnlyMemory<byte> NullBulkString = Encoding.ASCII.GetBytes("$-1\r\n"), EmptyBulkString = Encoding.ASCII.GetBytes("$0\r\n\r\n");
+        private static readonly ReadOnlyMemory<byte> NullBulkString = Encoding.ASCII.GetBytes("$-1\r\n"), EmptyBulkString = Encoding.ASCII.GetBytes("$0\r\n\r\n");
 
         private static void WriteUnifiedBlob(PipeWriter writer, byte[] value)
         {
@@ -1760,5 +1760,42 @@ namespace StackExchange.Redis
             }
             return new RawResult(block, false);
         }
+
+        #region IPhysicalBuffer implementation
+
+        PhysicalConnection IPhysicalBuffer.Connection
+        {
+            get
+            {
+                return this;
+            }
+        }
+
+        void IPhysicalBuffer.WriteHeader(RedisCommand command, int arguments, CommandBytes commandBytes)
+        {
+            WriteHeader(command, arguments, commandBytes);
+        }
+
+        void IPhysicalBuffer.Write(RedisKey key)
+        {
+            Write(key);
+        }
+
+        void IPhysicalBuffer.Write(RedisChannel channel)
+        {
+            Write(channel);
+        }
+
+        void IPhysicalBuffer.WriteSha1AsHex(byte[] hexHash)
+        {
+            WriteSha1AsHex(hexHash);
+        }
+
+        void IPhysicalBuffer.WriteBulkString(RedisValue value)
+        {
+            WriteBulkString(value);
+        }
+
+        #endregion
     }
 }

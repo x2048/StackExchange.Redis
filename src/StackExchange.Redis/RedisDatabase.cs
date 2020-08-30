@@ -755,7 +755,7 @@ namespace StackExchange.Redis
                 this.migrateOptions = migrateOptions;
             }
 
-            protected override void WriteImpl(PhysicalConnection physical)
+            protected override void WriteImpl(IPhysicalBuffer physical)
             {
                 bool isCopy = (migrateOptions & MigrateOptions.Copy) != 0;
                 bool isReplace = (migrateOptions & MigrateOptions.Replace) != 0;
@@ -3626,7 +3626,7 @@ namespace StackExchange.Redis
                 Script = script ?? throw new ArgumentNullException(nameof(script));
             }
 
-            protected override void WriteImpl(PhysicalConnection physical)
+            protected override void WriteImpl(IPhysicalBuffer physical)
             {
                 physical.WriteHeader(Command, 2);
                 physical.WriteBulkString(RedisLiterals.LOAD);
@@ -3686,7 +3686,7 @@ namespace StackExchange.Redis
                 _args = args ?? Array.Empty<object>();
             }
 
-            protected override void WriteImpl(PhysicalConnection physical)
+            protected override void WriteImpl(IPhysicalBuffer physical)
             {
                 physical.WriteHeader(RedisCommand.UNKNOWN, _args.Count, Command);
                 foreach (object arg in _args)
@@ -3791,7 +3791,7 @@ namespace StackExchange.Redis
                 yield return this;
             }
 
-            protected override void WriteImpl(PhysicalConnection physical)
+            protected override void WriteImpl(IPhysicalBuffer physical)
             {
                 if (hexHash != null)
                 {
@@ -3859,7 +3859,7 @@ namespace StackExchange.Redis
                 return slot;
             }
 
-            protected override void WriteImpl(PhysicalConnection physical)
+            protected override void WriteImpl(IPhysicalBuffer physical)
             {
                 physical.WriteHeader(Command, 2 + keys.Length + values.Length);
                 physical.Write(Key);
@@ -3916,7 +3916,7 @@ namespace StackExchange.Redis
                 return false;
             }
 
-            protected override void WriteImpl(PhysicalConnection physical)
+            protected override void WriteImpl(IPhysicalBuffer physical)
             {
                 physical.WriteHeader(command, 1);
                 physical.Write(Key);
