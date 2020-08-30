@@ -19,5 +19,7 @@ namespace StackExchange.Redis
         void WriteSha1AsHex(byte[] hexHash);
 
         void Write(in RedisChannel channel);
+
+        void WriteRawBytes(byte[] buffer);
     }
 }

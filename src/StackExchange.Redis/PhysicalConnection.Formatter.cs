@@ -74,6 +74,14 @@ namespace StackExchange.Redis
             }
 
             public void WriteSha1AsHex(byte[] hexHash) => PhysicalConnection.WriteSha1AsHex(hexHash, _writer);
+
+            public void WriteRawBytes(byte[] buffer)
+            {
+                var source = new Span<byte>(buffer);
+                var destination = _writer.GetSpan(buffer.Length);
+                source.CopyTo(destination);
+                _writer.Advance(buffer.Length);
+            }
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -99,6 +100,8 @@ namespace StackExchange.Redis
         private ProfiledCommand performance;
         internal DateTime createdDateTime;
         internal long createdTimestamp;
+
+        private byte[] prerenderedImage;
 
         protected Message(int db, CommandFlags flags, RedisCommand command)
         {
@@ -659,6 +662,7 @@ namespace StackExchange.Redis
             {
                 connection.GetBytes(out _queuedStampSent, out _queuedStampReceived);
             }
+            Prerender(connection);
         }
 
         internal void TryGetHeadMessages(out Message now, out Message next)
@@ -767,11 +771,40 @@ namespace StackExchange.Redis
 
         protected abstract void WriteImpl(IPhysicalBuffer physical);
 
+        internal void Prerender(PhysicalConnection connection)
+        {
+            if (connection == null)
+            {
+                return;
+            }
+
+            if (prerenderedImage != null)
+            {
+                return;
+            }
+
+            using (MemoryStream stream = new MemoryStream())
+            {
+                var writer = PipeWriter.Create(stream);
+                var formatter = new PhysicalConnection.Formatter(writer, connection);
+                this.WriteTo(formatter);
+                writer.Complete();
+                prerenderedImage = stream.ToArray();
+            }
+        }
+
         internal void WriteTo(IPhysicalBuffer physical)
         {
             try
             {
-                WriteImpl(physical);
+                if (prerenderedImage != null)
+                {
+                    physical.WriteRawBytes(prerenderedImage);
+                }
+                else
+                {
+                    WriteImpl(physical);
+                }
             }
             catch (RedisCommandException)
             { // these have specific meaning; don't wrap

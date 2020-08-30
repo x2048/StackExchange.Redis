@@ -1808,6 +1808,11 @@ namespace StackExchange.Redis
             _formatter.WriteBulkString(value);
         }
 
+        void IPhysicalBuffer.WriteRawBytes(byte[] buffer)
+        {
+            _formatter.WriteRawBytes(buffer);
+        }
+
         #endregion
     }
 }
