@@ -14,10 +14,10 @@ namespace StackExchange.Redis
 
         void WriteBulkString(RedisValue value);
 
-        void Write(RedisKey key);
+        void Write(in RedisKey key);
 
         void WriteSha1AsHex(byte[] hexHash);
 
-        void Write(RedisChannel channel);
+        void Write(in RedisChannel channel);
     }
 }

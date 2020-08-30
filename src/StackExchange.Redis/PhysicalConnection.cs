@@ -70,6 +70,9 @@ namespace StackExchange.Redis
         private IDuplexPipe _ioPipe;
 
         private Socket _socket;
+
+        private IPhysicalBuffer _formatter;
+
         private Socket VolatileSocket => Volatile.Read(ref _socket);
 
         public PhysicalConnection(PhysicalBridge bridge)
@@ -1009,9 +1012,9 @@ namespace StackExchange.Redis
             return WriteCrlf(span, offset);
         }
 
-        internal void WriteSha1AsHex(byte[] value)
+        internal void WriteSha1AsHex(byte[] value) => WriteSha1AsHex(value, _ioPipe.Output);
+        internal static void WriteSha1AsHex(byte[] value, PipeWriter writer)
         {
-            var writer = _ioPipe.Output;
             if (value == null)
             {
                 writer.Write(NullBulkString.Span);
@@ -1332,6 +1335,7 @@ namespace StackExchange.Redis
                 OnWrapForLogging(ref pipe, _physicalName, manager);
 
                 _ioPipe = pipe;
+                _formatter = new Formatter(_ioPipe.Output, this);
 
                 log?.WriteLine($"Connected {bridge}");
 
@@ -1767,33 +1771,41 @@ namespace StackExchange.Redis
         {
             get
             {
-                return this;
+                return _formatter.Connection;
+            }
+        }
+
+        PhysicalBridge IPhysicalBuffer.BridgeCouldBeNull
+        {
+            get
+            {
+                return _formatter?.BridgeCouldBeNull;
             }
         }
 
         void IPhysicalBuffer.WriteHeader(RedisCommand command, int arguments, CommandBytes commandBytes)
         {
-            WriteHeader(command, arguments, commandBytes);
+            _formatter.WriteHeader(command, arguments, commandBytes);
         }
 
-        void IPhysicalBuffer.Write(RedisKey key)
+        void IPhysicalBuffer.Write(in RedisKey key)
         {
-            Write(key);
+            _formatter.Write(key);
         }
 
-        void IPhysicalBuffer.Write(RedisChannel channel)
+        void IPhysicalBuffer.Write(in RedisChannel channel)
         {
-            Write(channel);
+            _formatter.Write(channel);
         }
 
         void IPhysicalBuffer.WriteSha1AsHex(byte[] hexHash)
         {
-            WriteSha1AsHex(hexHash);
+            _formatter.WriteSha1AsHex(hexHash);
         }
 
         void IPhysicalBuffer.WriteBulkString(RedisValue value)
         {
-            WriteBulkString(value);
+            _formatter.WriteBulkString(value);
         }
 
         #endregion
